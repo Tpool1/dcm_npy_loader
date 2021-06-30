@@ -11,7 +11,7 @@ prev_time = time.time()
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-load_dir = 'D:\Cancer_Project\Cancer Imagery\manifest-1621548522717\Duke-Breast-Cancer-MRI'
+load_dir = '/scratch/Duke-Breast-Cancer-MRI_v120201203/Duke-Breast-Cancer-MRI'
 
 load_paths = list()
 for (dirpath, dirnames, filenames) in os.walk(load_dir):
