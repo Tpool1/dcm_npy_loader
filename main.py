@@ -4,16 +4,33 @@ import numpy as np
 import pydicom as dicom
 import time
 import torch
+import random
+import math
 
 prev_time = time.time()
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-load_dir = '/scratch/Duke-Breast-Cancer-MRI_v120201203/Duke-Breast-Cancer-MRI'
+load_dir = 'D:\Cancer_Project\Cancer Imagery\manifest-1621548522717\Duke-Breast-Cancer-MRI'
 
 load_paths = list()
 for (dirpath, dirnames, filenames) in os.walk(load_dir):
     load_paths += [os.path.join(dirpath, file) for file in filenames]
+
+# get random subset of list
+percent_sample = 75
+total_imgs = len(load_paths) * (75*0.01)
+
+# round down
+total_imgs = math.floor(total_imgs)
+
+new_path_list = []
+for i in range(total_imgs):
+    rand_choice = random.choice(load_paths)
+
+    new_path_list.append(rand_choice)
+
+loads_paths = new_path_list
 
 img_list = []
 for path in load_paths:
@@ -35,9 +52,10 @@ for path in load_paths:
 
         img_list.append(subject)
 
-        dataset = torchio.SubjectsDataset(img_list, load_getitem=True)
     except:
         print('image ' + str(path) + ' could not be loaded')
+
+dataset = torchio.SubjectsDataset(img_list, load_getitem=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() 
                                   else "cpu")
