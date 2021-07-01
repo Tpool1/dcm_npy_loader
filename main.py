@@ -30,7 +30,7 @@ for i in range(total_imgs):
 
     new_path_list.append(rand_choice)
 
-loads_paths = new_path_list
+load_paths = new_path_list
 
 img_list = []
 for path in load_paths:
