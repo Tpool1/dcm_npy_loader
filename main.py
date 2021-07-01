@@ -11,7 +11,7 @@ prev_time = time.time()
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-load_dir = '/scratch/Duke-Breast-Cancer-MRI_v120201203/Duke-Breast-Cancer-MRI'
+load_dir = 'D:\Cancer_Project\Cancer Imagery\manifest-1621548522717\Duke-Breast-Cancer-MRI'
 
 load_paths = list()
 for (dirpath, dirnames, filenames) in os.walk(load_dir):
@@ -58,8 +58,7 @@ for path in load_paths:
 dataset = torchio.SubjectsDataset(img_list, load_getitem=True)
 print('Total length of dataset: ' + str(len(dataset)))
 
-device = torch.device("cuda" if torch.cuda.is_available() 
-                                  else "cpu")
+device = torch.device("cpu")
 
 img_tensor = torch.empty(size=(len(dataset), 512, 512, 1))
 
