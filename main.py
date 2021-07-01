@@ -56,6 +56,7 @@ for path in load_paths:
         print('image ' + str(path) + ' could not be loaded')
 
 dataset = torchio.SubjectsDataset(img_list, load_getitem=True)
+print('Total length of dataset: ' + str(len(dataset)))
 
 device = torch.device("cuda" if torch.cuda.is_available() 
                                   else "cpu")
