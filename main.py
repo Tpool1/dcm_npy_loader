@@ -19,7 +19,7 @@ for (dirpath, dirnames, filenames) in os.walk(load_dir):
 
 # get random subset of list
 percent_sample = 25
-total_imgs = len(load_paths) * (75*0.01)
+total_imgs = len(load_paths) * (percent_sample*0.01)
 
 # round down
 total_imgs = math.floor(total_imgs)
