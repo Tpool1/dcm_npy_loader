@@ -64,7 +64,7 @@ img_tensor = torch.empty(size=(len(dataset), 512, 512, 1))
 
 for i in range(len(dataset)):
     loader = torch.utils.data.DataLoader(dataset)
-    id = next(iter(loader))['id']
+    id = torch.tensor([int(next(iter(loader))['id'][0])])
     images = next(iter(loader))['one image']['data']
 
     images = images.to(device, torch.uint8)
@@ -77,6 +77,8 @@ for i in range(len(dataset)):
             images = torch.cat([images[0:j], images[j+1:]])
 
         j = j + 1
+
+    images[-1] = id
 
     img_tensor[i] = images
 
