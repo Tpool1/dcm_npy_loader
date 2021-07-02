@@ -11,7 +11,7 @@ prev_time = time.time()
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-load_dir = '/scratch/Duke-Breast-Cancer-MRI_v120201203/Duke-Breast-Cancer-MRI'
+load_dir = 'D:\Cancer_Project\Cancer Imagery\manifest-1621548522717\Duke-Breast-Cancer-MRI'
 
 load_paths = list()
 for (dirpath, dirnames, filenames) in os.walk(load_dir):
@@ -25,10 +25,13 @@ total_imgs = len(load_paths) * (percent_sample*0.01)
 total_imgs = math.floor(total_imgs)
 
 new_path_list = []
-for i in range(total_imgs):
+i = 0
+while i < total_imgs:
     rand_choice = random.choice(load_paths)
 
-    new_path_list.append(rand_choice)
+    if rand_choice not in new_path_list:
+        new_path_list.append(rand_choice)
+        i = i + 1
 
 load_paths = new_path_list
 
@@ -60,28 +63,30 @@ print('Total length of dataset: ' + str(len(dataset)))
 
 device = torch.device("cpu")
 
-img_tensor = torch.empty(size=(len(dataset), 512, 512, 1))
+img_array = np.empty(shape=(len(dataset), (256**2)+1))
 
-for i in range(len(dataset)):
-    loader = torch.utils.data.DataLoader(dataset)
-    id = torch.tensor([int(next(iter(loader))['id'][0])])
-    images = next(iter(loader))['one image']['data']
+loader = torch.utils.data.DataLoader(dataset)
+id = torch.tensor([int(next(iter(loader))['id'][0])])
+images = next(iter(loader))['one image']['data']
 
-    images = images.to(device, torch.uint8)
+images = images.to(device, torch.uint8)
 
-    j = 0
-    for image in images:
-        if tuple(image.shape) != (1, 512, 512, 1):
+i = 0
+for image in images:
 
-            # remove image if not correct shape
-            images = torch.cat([images[0:j], images[j+1:]])
+    print(image.shape)
+    if tuple(image.shape) == (1, 256, 256, 1):
+        images = images.cpu().numpy()
 
-        j = j + 1
+        images = images.flatten()
 
-    images[-1] = id
+        images = np.append(images, id)
+        print(id)
+        print(images[-1])
 
-    img_tensor[i] = images
+        img_array[i] = images
 
+img_tensor = torch.tensor(img_array)
 img_tensor = img_tensor.to(device, torch.uint8)
 
 img_tensor = img_tensor.cpu().numpy()
