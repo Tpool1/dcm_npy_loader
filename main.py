@@ -11,14 +11,16 @@ prev_time = time.time()
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-load_dir = 'D:\Cancer_Project\Cancer Imagery\manifest-1621548522717\Duke-Breast-Cancer-MRI'
+imgs_shape = (512, 512)
+
+load_dir = '/scratch/Duke-Breast-Cancer-MRI_v120201203/Duke-Breast-Cancer-MRI'
 
 load_paths = list()
 for (dirpath, dirnames, filenames) in os.walk(load_dir):
     load_paths += [os.path.join(dirpath, file) for file in filenames]
 
 # get random subset of list
-percent_sample = 50
+percent_sample = 65
 total_imgs = len(load_paths) * (percent_sample*0.01)
 
 # round down
@@ -40,20 +42,22 @@ for path in load_paths:
 
     try: 
         img = dicom.dcmread(path)
+        img_shape = img.pixel_array.shape
         id = img.PatientID
 
-        for c in id:
-            if not c.isdigit():
-                id = id.replace(c, '')
+        if img_shape == imgs_shape:
+            for c in id:
+                if not c.isdigit():
+                    id = id.replace(c, '')
 
-        subject_dict = {
-            'one image': torchio.ScalarImage(path),
-            'id': id
-        }
+            subject_dict = {
+                'one image': torchio.ScalarImage(path),
+                'id': id
+            }
 
-        subject = torchio.Subject(subject_dict)
+            subject = torchio.Subject(subject_dict)
 
-        img_list.append(subject)
+            img_list.append(subject)
 
     except:
         print('image ' + str(path) + ' could not be loaded')
@@ -63,35 +67,29 @@ print('Total length of dataset: ' + str(len(dataset)))
 
 device = torch.device("cpu")
 
-img_array = np.empty(shape=(len(dataset), (256**2)+1))
+img_array = np.empty(shape=(len(dataset), (imgs_shape[0]*imgs_shape[1])+1))
 
 loader = torch.utils.data.DataLoader(dataset)
-id = torch.tensor([int(next(iter(loader))['id'][0])])
-images = next(iter(loader))['one image']['data']
+for i in range(len(dataset)):
+    id = torch.tensor([int(next(iter(loader))['id'][0])])
+    images = next(iter(loader))['one image']['data']
 
-images = images.to(device, torch.uint8)
+    images = images.to(device, torch.uint8)
 
-i = 0
-for image in images:
+    i = 0
+    for image in images:
 
-    print(image.shape)
-    if tuple(image.shape) == (1, 256, 256, 1):
         images = images.cpu().numpy()
 
         images = images.flatten()
 
         images = np.append(images, id)
-        print(id)
-        print(images[-1])
 
         img_array[i] = images
 
-img_tensor = torch.tensor(img_array)
-img_tensor = img_tensor.to(device, torch.uint8)
+        i = i + 1
 
-img_tensor = img_tensor.cpu().numpy()
-
-np.save('converted_imgs/img_array.npy', img_tensor)
+np.save('converted_imgs/img_array.npy', img_array)
 
 after_time = time.time()
 
