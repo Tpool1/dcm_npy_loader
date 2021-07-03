@@ -67,7 +67,7 @@ print('Total length of dataset: ' + str(len(dataset)))
 
 device = torch.device("cpu")
 
-img_array = np.empty(shape=(len(dataset), (imgs_shape[0]*imgs_shape[1])+1))
+img_array = np.empty(shape=(len(dataset), (imgs_shape[0]*imgs_shape[1])+1), dtype=np.int8)
 
 loader = torch.utils.data.DataLoader(dataset)
 for i in range(len(dataset)):
