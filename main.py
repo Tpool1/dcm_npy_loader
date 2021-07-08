@@ -13,7 +13,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 imgs_shape = (512, 512)
 
-load_dir = '/scratch/Duke-Breast-Cancer-MRI_v120201203/Duke-Breast-Cancer-MRI'
+load_dir = 'D:\Cancer_Project\Cancer Imagery\manifest-1621548522717\Duke-Breast-Cancer-MRI'
 
 load_paths = list()
 for (dirpath, dirnames, filenames) in os.walk(load_dir):
@@ -62,32 +62,27 @@ for path in load_paths:
     except:
         print('image ' + str(path) + ' could not be loaded')
 
-dataset = torchio.SubjectsDataset(img_list, load_getitem=True)
+dataset = torchio.SubjectsDataset(img_list)
 print('Total length of dataset: ' + str(len(dataset)))
 
 device = torch.device("cpu")
 
 img_array = np.empty(shape=(len(dataset), (imgs_shape[0]*imgs_shape[1])+1), dtype=np.int8)
 
-loader = torch.utils.data.DataLoader(dataset)
 for i in range(len(dataset)):
+
+    loader = torch.utils.data.DataLoader(dataset, shuffle=True)
+
     id = torch.tensor([int(next(iter(loader))['id'][0])])
-    images = next(iter(loader))['one image']['data']
+    image = next(iter(loader))['one image']['data']
 
-    images = images.to(device, torch.uint8)
+    image = image.numpy()
 
-    i = 0
-    for image in images:
+    image = image.flatten()
 
-        images = images.cpu().numpy()
+    image = np.append(image, id)
 
-        images = images.flatten()
-
-        images = np.append(images, id)
-
-        img_array[i] = images
-
-        i = i + 1
+    img_array[i] = image
 
 np.save('converted_imgs/img_array.npy', img_array)
 
