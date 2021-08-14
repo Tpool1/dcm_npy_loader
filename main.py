@@ -6,21 +6,23 @@ import time
 import torch
 import random
 import math
+import tensorflow as tf
 
 prev_time = time.time()
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 imgs_shape = (512, 512)
+crop_shape = (128, 128)
 
-load_dir = '/scratch/Duke-Breast-Cancer-MRI_v120201203/Duke-Breast-Cancer-MRI'
+load_dir = 'C:/Users/trist/cs_projects/Cancer_Project/Cancer Imagery/manifest-1621548522717/Duke-Breast-Cancer-MRI'
 
 load_paths = list()
 for (dirpath, dirnames, filenames) in os.walk(load_dir):
     load_paths += [os.path.join(dirpath, file) for file in filenames]
 
 # get random subset of list
-percent_sample = 50
+percent_sample = 100
 total_imgs = len(load_paths) * (percent_sample*0.01)
 
 # round down
@@ -67,7 +69,7 @@ print('Total length of dataset: ' + str(len(dataset)))
 
 device = torch.device("cpu")
 
-img_array = np.empty(shape=(len(dataset), (imgs_shape[0]*imgs_shape[1])+1), dtype=np.int8)
+img_array = np.empty(shape=(len(dataset), (crop_shape[0]*crop_shape[1])+1), dtype=np.int8)
 
 for i in range(len(dataset)):
 
@@ -75,6 +77,11 @@ for i in range(len(dataset)):
 
     id = torch.tensor([int(next(iter(loader))['id'][0])])
     image = next(iter(loader))['one image']['data']
+
+    image = image.numpy()
+
+    # crop image
+    image = tf.image.random_crop(value=image, size=(1, 1, 128, 128, 1))
 
     image = image.numpy()
 
