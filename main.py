@@ -81,7 +81,7 @@ for i in range(len(dataset)):
     image = image.numpy()
 
     # crop image
-    image = tf.image.random_crop(value=image, size=(1, 1, 128, 128, 1))
+    image = tf.image.random_crop(value=image, size=(1, 1, crop_shape[0], crop_shape[1], 1))
 
     image = image.numpy()
 
