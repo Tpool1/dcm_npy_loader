@@ -13,9 +13,9 @@ prev_time = time.time()
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 imgs_shape = (512, 512)
-crop_shape = (128, 128)
+crop_shape = (256, 256)
 
-load_dir = 'C:/Users/trist/cs_projects/Cancer_Project/Cancer Imagery/manifest-1621548522717/Duke-Breast-Cancer-MRI'
+load_dir = '/scratch/COVID-19-NY-SBU-partial/manifest-1628608914773/COVID-19-NY-SBU'
 
 load_paths = list()
 for (dirpath, dirnames, filenames) in os.walk(load_dir):
@@ -75,7 +75,7 @@ for i in range(len(dataset)):
 
     loader = torch.utils.data.DataLoader(dataset, shuffle=True)
 
-    id = torch.tensor([int(next(iter(loader))['id'][0])])
+    id = int(next(iter(loader))['id'][0])
     image = next(iter(loader))['one image']['data']
 
     image = image.numpy()
@@ -91,7 +91,9 @@ for i in range(len(dataset)):
 
     img_array[i] = image
 
-np.save('converted_imgs/img_array.npy', img_array)
+print(img_array)
+
+np.save('img_array_covid.npy', img_array)
 
 after_time = time.time()
 
