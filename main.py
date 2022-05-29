@@ -8,94 +8,90 @@ import random
 import math
 import tensorflow as tf
 
-prev_time = time.time()
+def dcm_npy_loader(load_dir, imgs_shape=(512, 512), crop_shape=(512, 512)):
+    prev_time = time.time()
+    os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+    load_paths = list()
+    for (dirpath, dirnames, filenames) in os.walk(load_dir):
+        load_paths += [os.path.join(dirpath, file) for file in filenames]
 
-imgs_shape = (512, 512)
-crop_shape = (256, 256)
+    # get random subset of list
+    percent_sample = 100
+    total_imgs = len(load_paths) * (percent_sample*0.01)
 
-load_dir = '/scratch/COVID-19-NY-SBU-partial/manifest-1628608914773/COVID-19-NY-SBU'
+    # round down
+    total_imgs = math.floor(total_imgs)
 
-load_paths = list()
-for (dirpath, dirnames, filenames) in os.walk(load_dir):
-    load_paths += [os.path.join(dirpath, file) for file in filenames]
+    new_path_list = []
+    i = 0
+    while i < total_imgs:
+        rand_choice = random.choice(load_paths)
 
-# get random subset of list
-percent_sample = 100
-total_imgs = len(load_paths) * (percent_sample*0.01)
+        if rand_choice not in new_path_list:
+            new_path_list.append(rand_choice)
+            i = i + 1
 
-# round down
-total_imgs = math.floor(total_imgs)
+    load_paths = new_path_list
 
-new_path_list = []
-i = 0
-while i < total_imgs:
-    rand_choice = random.choice(load_paths)
+    img_list = []
+    for path in load_paths:
 
-    if rand_choice not in new_path_list:
-        new_path_list.append(rand_choice)
-        i = i + 1
+        try: 
+            img = dicom.dcmread(path)
+            img_shape = img.pixel_array.shape
+            id = img.PatientID
+            slice_location = img.get('SliceLocation')
 
-load_paths = new_path_list
+            if img_shape == imgs_shape:
+                for c in id:
+                    if not c.isdigit():
+                        id = id.replace(c, '')
 
-img_list = []
-for path in load_paths:
+                subject_dict = {
+                    'one image': torchio.ScalarImage(path),
+                    'id': id,
+                    'SliceLocation': slice_location
+                }
 
-    try: 
-        img = dicom.dcmread(path)
-        img_shape = img.pixel_array.shape
-        id = img.PatientID
+                subject = torchio.Subject(subject_dict)
 
-        if img_shape == imgs_shape:
-            for c in id:
-                if not c.isdigit():
-                    id = id.replace(c, '')
+                img_list.append(subject)
 
-            subject_dict = {
-                'one image': torchio.ScalarImage(path),
-                'id': id
-            }
+        except:
+            print('image ' + str(path) + ' could not be loaded')
 
-            subject = torchio.Subject(subject_dict)
+    dataset = torchio.SubjectsDataset(img_list)
+    print('Total length of dataset: ' + str(len(dataset)))
 
-            img_list.append(subject)
+    # +2 for slice location and id at end
+    img_array = np.empty(shape=(len(dataset), (crop_shape[0]*crop_shape[1])+2), dtype=np.float16)
 
-    except:
-        print('image ' + str(path) + ' could not be loaded')
+    for i in range(len(dataset)):
 
-dataset = torchio.SubjectsDataset(img_list)
-print('Total length of dataset: ' + str(len(dataset)))
+        loader = torch.utils.data.DataLoader(dataset, shuffle=True)
 
-device = torch.device("cpu")
+        id = int(next(iter(loader))['id'][0])
+        slice_location = float(next(iter(loader))['SliceLocation'])
+        image = next(iter(loader))['one image']['data']
 
-img_array = np.empty(shape=(len(dataset), (crop_shape[0]*crop_shape[1])+1), dtype=np.int8)
+        image = image.numpy()
 
-for i in range(len(dataset)):
+        # crop image
+        image = tf.image.random_crop(value=image, size=(1, 1, crop_shape[0], crop_shape[1], 1))
 
-    loader = torch.utils.data.DataLoader(dataset, shuffle=True)
+        image = image.numpy()
 
-    id = int(next(iter(loader))['id'][0])
-    image = next(iter(loader))['one image']['data']
+        image = image.flatten()
 
-    image = image.numpy()
+        image = np.append(image, slice_location)
+        image = np.append(image, id)
 
-    # crop image
-    image = tf.image.random_crop(value=image, size=(1, 1, crop_shape[0], crop_shape[1], 1))
+        img_array[i] = image
 
-    image = image.numpy()
+    np.save('img_array.npy', img_array)
 
-    image = image.flatten()
+    after_time = time.time()
 
-    image = np.append(image, id)
-
-    img_array[i] = image
-
-print(img_array)
-
-np.save('img_array_covid.npy', img_array)
-
-after_time = time.time()
-
-load_time = after_time - prev_time
-print(load_time)
+    load_time = after_time - prev_time
+    print(load_time)
